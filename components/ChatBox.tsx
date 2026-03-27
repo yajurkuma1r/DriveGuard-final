@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useLoading } from "@/context/LoadingContext";
 
 const VIOLATION_KEYWORDS: Record<string, string[]> = {
@@ -61,7 +60,6 @@ const detectLocation = (input: string) => {
     text.includes(state.toLowerCase())
   );
   if (matchedState) return matchedState;
-
   const cityMatch = text.match(
     /\b(?:in|at|from)\s+([a-z]+(?:[\s-][a-z]+){0,3})(?=\b(?:for|with|without|while|and|,|\.|$))/i
   );
@@ -103,36 +101,57 @@ export default function ChatBox({ isComplianceReady, offenseHistory, documents }
 
   const router = useRouter();
   const { isAuthenticated, token } = useAuth();
-
-  // ✅ Global loader instead of local loading state
   const { setLoading } = useLoading();
 
-  const { startListening, stopListening } = useSpeechRecognition({
-    onResult: (transcript) => {
+  const handleMicClick = useCallback(() => {
+    if (isRecording) {
+      setIsRecording(false);
+      return;
+    }
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setVoiceError("Speech recognition not supported in this browser.");
+      setTimeout(() => setVoiceError(null), 3000);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-IN";
+    recognition.interimResults = false;
+    recognition.continuous = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      setIsRecording(true);
+      setVoiceError(null);
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
       setText((prev) => (prev ? prev + " " + transcript : transcript));
-    },
-    onError: (error) => {
-      if (error === "not-allowed") {
+    };
+
+    recognition.onerror = (event: any) => {
+      if (event.error === "not-allowed") {
         setVoiceError("Mic access denied. Please allow microphone permission.");
-      } else if (error === "no-speech") {
+      } else if (event.error === "no-speech") {
         setVoiceError("No speech detected. Try again.");
       } else {
         setVoiceError("Voice input failed. Try again.");
       }
       setTimeout(() => setVoiceError(null), 3000);
-    },
-  });
+      setIsRecording(false);
+    };
 
-  const handleMicDown = () => {
-    setIsRecording(true);
-    setVoiceError(null);
-    startListening();
-  };
+    recognition.onend = () => {
+      setIsRecording(false);
+    };
 
-  const handleMicUp = () => {
-    setIsRecording(false);
-    stopListening();
-  };
+    recognition.start();
+  }, [isRecording]);
 
   const handleAnalyze = async () => {
     if (!text.trim()) return;
@@ -141,7 +160,6 @@ export default function ChatBox({ isComplianceReady, offenseHistory, documents }
       return;
     }
 
-    // ✅ Triggers global steering wheel loader
     setLoading(true);
 
     try {
@@ -183,7 +201,6 @@ export default function ChatBox({ isComplianceReady, offenseHistory, documents }
     } catch (error) {
       console.error("Error:", error);
     } finally {
-      // ✅ Stops global steering wheel loader
       setLoading(false);
     }
   };
@@ -213,7 +230,7 @@ export default function ChatBox({ isComplianceReady, offenseHistory, documents }
 
       {isRecording && (
         <p className="text-[11px] text-red-400 mt-2 animate-pulse">
-          🎙️ Listening... release to stop
+          🎙️ Listening... will stop automatically on silence
         </p>
       )}
 
@@ -222,19 +239,14 @@ export default function ChatBox({ isComplianceReady, offenseHistory, documents }
       )}
 
       <div className="mt-4 flex items-center justify-end gap-2">
-        {/* Mic Button */}
         <button
-          onMouseDown={handleMicDown}
-          onMouseUp={handleMicUp}
-          onMouseLeave={handleMicUp}
-          onTouchStart={handleMicDown}
-          onTouchEnd={handleMicUp}
+          onClick={handleMicClick}
           className={`p-2 rounded-lg border transition-all duration-200 hover:scale-105 active:scale-95 ${
             isRecording
               ? "bg-red-500/20 border-red-500/60 shadow-[0_0_12px_rgba(239,68,68,0.4)]"
               : "bg-white/5 border-white/10 hover:bg-white/10"
           }`}
-          title="Hold to speak"
+          title={isRecording ? "Listening..." : "Click to speak"}
           type="button"
         >
           {isRecording ? (
@@ -248,7 +260,6 @@ export default function ChatBox({ isComplianceReady, offenseHistory, documents }
           )}
         </button>
 
-        {/* Analyze Button */}
         <button
           onClick={handleAnalyze}
           disabled={!isComplianceReady}
