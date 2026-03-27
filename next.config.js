@@ -7,11 +7,5 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      config.externals = [...(config.externals || []), "three"];
-    }
-    return config;
-  },
 };
 module.exports = nextConfig;
