@@ -1,22 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import dynamic from "next/dynamic";
 import ChatBox from "@/components/ChatBox";
 import DocumentsBox from "@/components/DocumentsBox";
 import ManualEntry from "@/components/ManualEntry";
 import HistorySection from "@/components/HistorySection";
 import Navbar from "@/components/Navbar";
-
-const TrafficLightBackground = dynamic(
-  () => import("@/components/TrafficLightBackground"),
-  { ssr: false }
-);
-
-const DriverPOVBackground = dynamic(
-  () => import("@/components/DriverPOVBackground"),
-  { ssr: false }
-);
 
 type DocumentAnswers = {
   license: boolean | null;
@@ -54,12 +43,8 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen bg-[#0B0B0C] text-white">
-      <TrafficLightBackground />
-      <DriverPOVBackground />
-
       <div className="relative z-10 p-4 sm:p-6 lg:p-8">
         <Navbar />
-
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
           <ChatBox
             isComplianceReady={isComplianceReady}
@@ -78,11 +63,9 @@ export default function Home() {
             documents={documents}
           />
         </div>
-
         <div className="mx-auto max-w-7xl mt-6">
           <HistorySection />
         </div>
-
         <div className="mt-10 border-t border-white/10 pt-6 text-center text-xs text-gray-400">
           <p>
             Contact: <span className="text-white">Yajur</span>
