@@ -11,14 +11,12 @@
   "dependencies": {
     "next": "15.2.4",
     "react": "19.0.0",
-    "react-dom": "19.0.0",
-    "three": "^0.163.0"
+    "react-dom": "19.0.0"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@types/three": "^0.163.0",
     "@tailwindcss/postcss": "^4",
     "@eslint/eslintrc": "^3",
     "eslint": "^9",
