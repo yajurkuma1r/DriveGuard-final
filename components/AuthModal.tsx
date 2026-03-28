@@ -27,7 +27,6 @@ export default function AuthModal({
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState("");
 
-  // ✅ Global loader
   const { setLoading } = useLoading();
 
   if (!open) return null;
@@ -51,7 +50,6 @@ export default function AuthModal({
       return;
     }
 
-    // ✅ Close modal first so wheel shows cleanly without overlap
     onClose();
     setLoading(true);
 
@@ -60,15 +58,15 @@ export default function AuthModal({
         await login({ email, password });
       } else {
         await signup({ name, email, password });
+        // ✅ Auto login after signup
+        await login({ email, password });
       }
       if (!rememberMe) {
         sessionStorage.setItem("tfa_logged_in_session_only", "1");
       }
       resetForm();
     } catch (e) {
-      // ✅ Reopen modal and show error if auth fails
       setError(e instanceof Error ? e.message : "Authentication failed");
-      onClose(); // keep closed, error shown on retry
     } finally {
       setLoading(false);
     }
