@@ -1,5 +1,4 @@
 "use client";
-
 import {
   createContext,
   useContext,
@@ -14,18 +13,15 @@ type User = {
   name: string;
   email: string;
 };
-
 type SignupPayload = {
   name: string;
   email: string;
   password: string;
 };
-
 type LoginPayload = {
   email: string;
   password: string;
 };
-
 type AuthContextValue = {
   user: User | null;
   token: string | null;
@@ -36,7 +32,8 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
-const API_BASE = "http://127.0.0.1:5000";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://driveguard.onrender.com";
 const AUTH_STORAGE_KEY = "tfa_auth";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -53,6 +50,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       localStorage.removeItem(AUTH_STORAGE_KEY);
     }
+
+    // ✅ Wake up Render backend on page load so first calculation is fast
+    fetch(`${API_BASE}/api/ping`).catch(() => {});
   }, []);
 
   const persistAuth = (nextUser: User, nextToken: string) => {
